@@ -1,6 +1,6 @@
 use std::{
     fs::{self},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use clap::Parser;
@@ -8,6 +8,7 @@ use fs_extra::dir::{self, CopyOptions};
 use handlebars::Handlebars;
 use pulldown_cmark::{html::push_html, CowStr, Event, Options, Tag};
 use serde_json::Value;
+use shellexpand::tilde;
 use walkdir::WalkDir;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -142,29 +143,31 @@ fn render_template(
 #[command(version, about, long_about=None)]
 struct Args {
     /// Directory containing the site's content.
-    content: PathBuf,
+    content: String,
 
     /// Path to the site's header.
-    #[arg(long, default_value = "./header.md")]
-    header: PathBuf,
+    #[arg(long, default_value = "header.md")]
+    header: String,
 
     /// Path to the site's footer.
-    #[arg(long, default_value = "./footer.md")]
-    footer: PathBuf,
+    #[arg(long, default_value = "footer.md")]
+    footer: String,
 
     /// Path to the site's stylesheet.
-    #[arg(long, default_value = "./style.css")]
-    style: PathBuf,
+    #[arg(long, default_value = "style.css")]
+    style: String,
 
     /// Site output directory. Will be created if it doesn't already exist.
-    #[arg(short, long, default_value = "./_site")]
-    output: PathBuf,
+    #[arg(short, long, default_value = "_site")]
+    output: String,
 }
 
 fn generate_site(args: Args) -> Result<(), Box<dyn std::error::Error>> {
-    let content_dir = fs::canonicalize(&args.content).expect("Unable to find content directory.");
-    // Try to canonicalize the path
-    let site_dir = match fs::canonicalize(&args.output) {
+    let content = fs::canonicalize(tilde(&args.content).into_owned())
+        .expect("Unable to find content directory.");
+
+    let output_path = tilde(&args.output).into_owned();
+    let output = match fs::canonicalize(&output_path) {
         Ok(path) => {
             // Path exists and is canonicalized, remove contents
             fs::remove_dir_all(&path)?;
@@ -173,46 +176,51 @@ fn generate_site(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(_) => {
             // Path does not exist, create it and canonicalize it again
-            fs::create_dir_all(&args.output)?;
-            fs::canonicalize(&args.output)?
+            fs::create_dir_all(&output_path)?;
+            fs::canonicalize(&output_path)?
         }
     };
 
     // Copy static assets from content/static to site/static
-    let static_dir = content_dir.join("static");
-    let output_static_dir = site_dir.join("static");
+    let static_dir = content.join("static");
+    let output_static_dir = output.join("static");
     if static_dir.exists() {
         fs::create_dir_all(&output_static_dir)?;
         copy_directory(&static_dir, &output_static_dir)?;
     }
 
     // Load the style
-    let style_path = Path::new(&args.style);
+    let style_path =
+        fs::canonicalize(tilde(&args.style).into_owned()).expect("Unable to load styles.");
     let style = fs::read_to_string(&style_path)?;
 
     // Generate html for header
-    let header_html = fs::metadata(&args.header).ok().and_then(|metadata| {
-        if metadata.is_file() {
-            fs::read_to_string(&args.header)
-                .ok()
-                .and_then(|content| markdown_to_html(&content, &content_dir).ok())
-        } else {
-            None
-        }
-    });
+    let header_html = fs::metadata(tilde(&args.header).into_owned())
+        .ok()
+        .and_then(|metadata| {
+            if metadata.is_file() {
+                fs::read_to_string(&args.header)
+                    .ok()
+                    .and_then(|header| markdown_to_html(&header, &content).ok())
+            } else {
+                None
+            }
+        });
 
     // Generate html for footer
-    let footer_html = fs::metadata(&args.footer).ok().and_then(|metadata| {
-        if metadata.is_file() {
-            fs::read_to_string(&args.footer)
-                .ok()
-                .and_then(|content| markdown_to_html(&content, &content_dir).ok())
-        } else {
-            None
-        }
-    });
+    let footer_html = fs::metadata(tilde(&args.footer).into_owned())
+        .ok()
+        .and_then(|metadata| {
+            if metadata.is_file() {
+                fs::read_to_string(&args.footer)
+                    .ok()
+                    .and_then(|footer| markdown_to_html(&footer, &content).ok())
+            } else {
+                None
+            }
+        });
 
-    for entry in WalkDir::new(&content_dir)
+    for entry in WalkDir::new(&content)
         .into_iter()
         .filter_entry(|e| !e.path().starts_with(&static_dir) || !(&e.path() == &style_path))
         .filter_map(|e| e.ok())
@@ -221,13 +229,10 @@ fn generate_site(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         if entry.file_type().is_file() && entry.path().extension().map_or(false, |e| e == "md") {
             let md = fs::read_to_string(entry.path())?;
             let (title, description, md_content) = extract_front_matter(&md)?;
-            let html = markdown_to_html(&md_content, &content_dir)?;
+            let html = markdown_to_html(&md_content, &content)?;
 
-            let relative_path = entry
-                .path()
-                .strip_prefix(&content_dir)?
-                .with_extension("html");
-            let output_path = site_dir.join(&relative_path);
+            let relative_path = entry.path().strip_prefix(&content)?.with_extension("html");
+            let output_path = output.join(&relative_path);
 
             let final_html = render_template(
                 &title,
