@@ -189,6 +189,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
 
 [[package]]
+name = "gdt-ssg"
+version = "1.0.0"
+dependencies = [
+ "clap",
+ "fs_extra",
+ "handlebars",
+ "pulldown-cmark",
+ "regex",
+ "serde_json",
+ "serde_yaml",
+ "shellexpand",
+ "walkdir",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -499,21 +514,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ccc8076840c4da029af4f87e4e8daeb0fca6b87bbb02e10cb60b791450e11e4"
 dependencies = [
  "dirs",
-]
-
-[[package]]
-name = "ssg"
-version = "0.1.0"
-dependencies = [
- "clap",
- "fs_extra",
- "handlebars",
- "pulldown-cmark",
- "regex",
- "serde_json",
- "serde_yaml",
- "shellexpand",
- "walkdir",
 ]
 
 [[package]]
