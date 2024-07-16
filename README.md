@@ -2,7 +2,6 @@
 
 A dead simple static site generator. `¯\_(ツ)_/¯`
 
-Based on the premise that curation is valuable and modern text editors with decent LSPs are pretty good 
 
 ## Features
 
@@ -16,6 +15,10 @@ figure out how to use this thing than it does to write your own SSG then I
 failed.
 
 No templating. No automatic aggregation of links on pages. No themes.
+
+Based on the premise that curation is valuable, so you'll need to manually
+organize and link your pages. It's really not that hard with a decent text
+editor.
 
 ## Install
 
