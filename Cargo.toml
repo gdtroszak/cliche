@@ -1,11 +1,11 @@
 [package]
-name = "gdt-ssg"
+name = "cliche"
 version = "1.0.0"
 authors = ["Greg Troszak <gdtroszak@gmail.com>"]
 description = "Dead simple static site generator."
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/gdtroszak/ssg"
+repository = "https://github.com/gdtroszak/cliche"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
