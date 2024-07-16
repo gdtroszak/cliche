@@ -47,6 +47,7 @@ Options:
 
 ## Details
 
+
 ### Add a header file (optional)
 
 ```markdown
@@ -119,7 +120,7 @@ body {
 }
 ```
 
-I'd recoomend that you just copy one of the many [classless](https://github.com/dbohdan/classless-css)
+I'd recommend that you just copy one of the many [classless](https://github.com/dbohdan/classless-css)
 options available.
 
 You can add classes by throwing a bunch of HTML all over your Markdown, but that
@@ -139,3 +140,7 @@ is perfect for that.
 ```bash
 simple-http-server -i --nocache ./_site
 ```
+
+### Want more?
+
+See [my personal website](https://github.com/gdtroszak/website) for an example.
