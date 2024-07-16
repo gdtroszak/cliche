@@ -1,3 +1,3 @@
 # cliché
 
-A dead simple static site generator. ¯\_(ツ)_/¯
+A dead simple static site generator. `¯\_(ツ)_/¯`
