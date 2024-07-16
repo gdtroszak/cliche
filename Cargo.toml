@@ -1,6 +1,6 @@
 [package]
 name = "cliche"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Greg Troszak <gdtroszak@gmail.com>"]
 description = "Dead simple static site generator."
 edition = "2021"
