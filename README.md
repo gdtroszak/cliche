@@ -80,17 +80,17 @@ that shows the URL paths to each page.
 ```bash
 .
 └── content/
-    ├── index.md              // `/`
+    ├── index.md              // /
     ├── static/
-    │   └── image.jpg         // `/static/image.jpg`
+    │   └── image.jpg         // /static/image.jpg
     ├── food/
-    │   ├── index.md          // `/food`
-    │   ├── coffee.md         // `/food/coffee.html`
+    │   ├── index.md          // /food
+    │   ├── coffee.md         // /food/coffee.html
     │   └── bread/
-    │       ├── sourdough.md  // `/food/bread/sourdough.html`
-    │       └── wheat.md      // `/food/bread/wheat.html`
+    │       ├── sourdough.md  // /food/bread/sourdough.html
+    │       └── wheat.md      // /food/bread/wheat.html
     └── bikes/
-        └── gravel.md         // `/bikes/gravel.html`
+        └── gravel.md         // /bikes/gravel.html
 ```
 
 Maybe I'd want my homepage to link to a few other pages.
