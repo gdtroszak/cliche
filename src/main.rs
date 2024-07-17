@@ -293,7 +293,6 @@ struct HTMLContent {
 ///
 /// # Arguments
 /// * content - The markdown content to process.
-/// * content_dir - Path to the content directory for resolving relative paths.
 ///
 /// # Returns
 /// * A Result<MarkdownContent> containing structured markdown and extracted front matter.
@@ -311,8 +310,14 @@ fn process_markdown(content: &str) -> Result<MarkdownContent> {
                 .with_context(|| "Failed to parse YAML front matter.")?;
 
             // Extract title from front matter, default to empty if not present
-            let title = front_matter.get("title").map(Value::to_string);
-            let meta_description = front_matter.get("meta_description").map(Value::to_string);
+            let title = front_matter
+                .get("title")
+                .and_then(Value::as_str)
+                .map(|s| s.to_owned());
+            let meta_description = front_matter
+                .get("meta_description")
+                .and_then(Value::as_str)
+                .map(|s| s.to_owned());
 
             Ok(MarkdownContent {
                 front_matter: Some(FrontMatter {
