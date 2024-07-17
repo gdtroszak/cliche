@@ -98,13 +98,22 @@ Maybe I'd want my homepage to link to a few other pages.
 ```markdown
 <!-- content/index.md -->
 
+---
+title: my amazing website
+meta_description: a website about me and all the things I like.
+---
+
 - [food](./food/index.md)
 - [gravel biking](content/bikes/gravel.md)
 ```
 
-Note that links to other content can either be relative to the file itself or
-the root of your project. Use a text editor with a Markdown LSP. It'll make this
-really easy.
+A few things to note here:
+
+1. You can optionally add a title and meta_description in front-matter. This
+   will be used in the `meta` tags for the page.
+2. Links to other content can either be relative to the file itself or
+   the root of your project. Use a text editor with a Markdown LSP. It'll make this
+   really easy.
 
 ### Add some style (optional)
 
