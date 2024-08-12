@@ -1,5 +1,6 @@
 use std::{
-    fs::{self},
+    fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -60,6 +61,7 @@ fn generate_site(args: Args) {
     let style = load_style(&args.style);
     let header = load_header(&args.header, &content_path);
     let footer = load_footer(&args.footer, &content_path);
+    let mut sitemap_entries = Vec::new();
 
     for entry in WalkDir::new(&content_path)
         .into_iter()
@@ -77,6 +79,8 @@ fn generate_site(args: Args) {
                 .unwrap()
                 .with_extension("html");
             let output_path = output_path.join(&relative_path);
+
+            sitemap_entries.push(relative_path.to_string_lossy().to_string());
 
             let final_html = render_template(
                 style.as_deref(),
@@ -97,6 +101,10 @@ fn generate_site(args: Args) {
                 .unwrap_or_else(|_| std::process::exit(1));
         }
     }
+
+    generate_sitemap(&output_path, &sitemap_entries)
+        .map_err(|e| eprintln!("Error generating sitemap: {}", e))
+        .unwrap_or_else(|_| std::process::exit(1));
 }
 
 /// Retrieves the absolute path for the content directory, handling expansion of any user variables.
@@ -401,4 +409,31 @@ fn markdown_to_html(markdown_input: &str, content_dir: &Path) -> Result<String> 
     let mut html_output = String::new();
     push_html(&mut html_output, events.into_iter());
     Ok(html_output)
+}
+
+/// Generates the sitemap.xml file with the given entries.
+///
+/// # Arguments
+/// * `output_path` - Path to the output directory.
+/// * `entries` - List of relative paths to be included in the sitemap.
+///
+/// # Returns
+/// * A `Result<()>` indicating the success or failure of the operation.
+fn generate_sitemap(output_path: &Path, entries: &[String]) -> Result<()> {
+    let sitemap_path = output_path.join("sitemap.xml");
+    let mut file = File::create(&sitemap_path)?;
+
+    writeln!(file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")?;
+    writeln!(
+        file,
+        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
+    )?;
+
+    for entry in entries {
+        let url = format!("<url><loc>{}</loc></url>", entry);
+        writeln!(file, "{}", url)?;
+    }
+
+    writeln!(file, "</urlset>")?;
+    Ok(())
 }
