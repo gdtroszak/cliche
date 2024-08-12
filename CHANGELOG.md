@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2024-08-12
+
 ### Added
 
 - Generate a sitemap and serve it at the root of the site.
