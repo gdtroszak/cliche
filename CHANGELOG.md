@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2024-08-12
+ 
 ### Fixed
 
 - Use full URLs in the sitemap. Sitemaps will only be generated if the optional
