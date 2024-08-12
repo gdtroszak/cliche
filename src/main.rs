@@ -41,7 +41,8 @@ struct Args {
     #[arg(short, long, default_value = "_site")]
     output: String,
 
-    /// The domain of the site, used for generating full URLs in the sitemap.
+    /// The domain of the site, used for generating full URLs in the sitemap. If
+    /// not provided, a sitemap will not be generated.
     #[arg(long)]
     domain: Option<String>,
 }
