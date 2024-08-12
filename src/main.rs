@@ -40,6 +40,10 @@ struct Args {
     /// Site output directory. Will be created if it doesn't already exist.
     #[arg(short, long, default_value = "_site")]
     output: String,
+
+    /// The domain of the site, used for generating full URLs in the sitemap.
+    #[arg(long)]
+    domain: Option<String>,
 }
 
 /// Generates the static site using provided command line arguments.
@@ -80,7 +84,14 @@ fn generate_site(args: Args) {
                 .with_extension("html");
             let output_path = output_path.join(&relative_path);
 
-            sitemap_entries.push(relative_path.to_string_lossy().to_string());
+            if let Some(ref domain) = args.domain {
+                let full_url = format!(
+                    "{}/{}",
+                    domain.trim_end_matches('/'),
+                    relative_path.to_string_lossy()
+                );
+                sitemap_entries.push(full_url);
+            };
 
             let final_html = render_template(
                 style.as_deref(),
@@ -102,9 +113,11 @@ fn generate_site(args: Args) {
         }
     }
 
-    generate_sitemap(&output_path, &sitemap_entries)
-        .map_err(|e| eprintln!("Error generating sitemap: {}", e))
-        .unwrap_or_else(|_| std::process::exit(1));
+    if let Some(_) = args.domain {
+        generate_sitemap(&output_path, &sitemap_entries)
+            .map_err(|e| eprintln!("Error generating sitemap: {}", e))
+            .unwrap_or_else(|_| std::process::exit(1));
+    }
 }
 
 /// Retrieves the absolute path for the content directory, handling expansion of any user variables.
