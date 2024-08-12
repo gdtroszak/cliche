@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Use full URLs in the sitemap. Sitemaps will only be generated if the optional
+  `domain` CLI arg is provided.
+
 ## [1.1.0] - 2024-08-12
 
 ### Added
