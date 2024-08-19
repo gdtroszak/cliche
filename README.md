@@ -37,13 +37,14 @@ Arguments:
   <CONTENT>  Directory containing the site's content
 
 Options:
-      --header <HEADER>  Path to the site's header [default: header.md]
-      --footer <FOOTER>  Path to the site's footer [default: footer.md]
-      --style <STYLE>    Path to the site's stylesheet [default: style.css]
-  -o, --output <OUTPUT>  Site output directory. Will be created if it doesn't already exist [default: _site]
-      --domain <DOMAIN>  The domain of the site, used for generating full URLs in the sitemap. If not provided, a sitemap will not be generated
-  -h, --help             Print help
-  -V, --version          Print version
+      --header <HEADER>      Path to the site's header [default: header.md]
+      --footer <FOOTER>      Path to the site's footer [default: footer.md]
+      --style <STYLE>        Path to the site's stylesheet [default: style.css]
+  -o, --output <OUTPUT>      Site output directory. Will be created if it doesn't already exist [default: _site]
+      --domain <DOMAIN>      The domain of the site, used for generating full URLs in the sitemap. If not provided, a sitemap will not be generated
+      --base-url <BASE_URL>  A base url that the site will be served from
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ## Details

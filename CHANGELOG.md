@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `base-url` option handles scenarios where the site will be served on a base
+  path that isn't the root of the domain.
+
 ## [1.1.1] - 2024-08-12
  
 ### Fixed

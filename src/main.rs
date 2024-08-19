@@ -45,6 +45,10 @@ struct Args {
     /// not provided, a sitemap will not be generated.
     #[arg(long)]
     domain: Option<String>,
+
+    /// A base url that the site will be served from.
+    #[arg(long)]
+    base_url: Option<String>,
 }
 
 /// Generates the static site using provided command line arguments.
@@ -58,14 +62,15 @@ fn generate_site(args: Args) {
     let output_path = get_output_path(args.output)
         .map_err(|e| eprintln!("Error preparing the output path: {}", e))
         .unwrap_or_else(|_| std::process::exit(1));
+    let base_url = args.base_url.as_deref();
 
     copy_static_assets(&content_path, &output_path)
         .map_err(|e| eprintln!("Error copying static assets: {}", e))
         .unwrap_or_else(|_| std::process::exit(1));
 
     let style = load_style(&args.style);
-    let header = load_header(&args.header, &content_path);
-    let footer = load_footer(&args.footer, &content_path);
+    let header = load_header(&args.header, &content_path, base_url);
+    let footer = load_footer(&args.footer, &content_path, base_url);
     let mut sitemap_entries = Vec::new();
 
     for entry in WalkDir::new(&content_path)
@@ -74,7 +79,7 @@ fn generate_site(args: Args) {
         .filter_map(|e| e.ok())
     {
         if entry.file_type().is_file() && entry.path().extension().map_or(false, |e| e == "md") {
-            let html_content = load_html_from_md_file(entry.path(), &content_path)
+            let html_content = load_html_from_md_file(entry.path(), &content_path, base_url)
                 .map_err(|e| eprintln!("Error rendering markdown to HTML: {}", e))
                 .unwrap_or_else(|_| std::process::exit(1));
 
@@ -86,11 +91,20 @@ fn generate_site(args: Args) {
             let output_path = output_path.join(&relative_path);
 
             if let Some(ref domain) = args.domain {
-                let full_url = format!(
-                    "{}/{}",
-                    domain.trim_end_matches('/'),
-                    relative_path.to_string_lossy()
-                );
+                let full_url = if let Some(base) = base_url {
+                    format!(
+                        "{}/{}/{}",
+                        domain.trim_end_matches("/"),
+                        base.trim_start_matches("/").trim_end_matches("/"),
+                        relative_path.to_string_lossy()
+                    )
+                } else {
+                    format!(
+                        "{}/{}",
+                        domain.trim_end_matches("/"),
+                        relative_path.to_string_lossy()
+                    )
+                };
                 sitemap_entries.push(full_url);
             };
 
@@ -199,9 +213,13 @@ fn load_style(style_path: impl AsRef<str>) -> Option<String> {
 ///
 /// # Returns
 /// * An `Option<HTMLContent>` containing the processed header HTML content, or `None` if an error occurs.
-fn load_header(header_path: impl AsRef<str>, content_path: &Path) -> Option<HTMLContent> {
+fn load_header(
+    header_path: impl AsRef<str>,
+    content_path: &Path,
+    base_url: Option<&str>,
+) -> Option<HTMLContent> {
     let header_path = get_absolute_path(header_path).ok()?;
-    load_html_from_md_file(&header_path, content_path).ok()
+    load_html_from_md_file(&header_path, content_path, base_url).ok()
 }
 
 /// Loads and processes the footer markdown file into HTML content.
@@ -212,9 +230,13 @@ fn load_header(header_path: impl AsRef<str>, content_path: &Path) -> Option<HTML
 ///
 /// # Returns
 /// * An `Option<HTMLContent>` containing the processed footer HTML content, or `None` if an error occurs.
-fn load_footer(footer_path: impl AsRef<str>, content_path: &Path) -> Option<HTMLContent> {
+fn load_footer(
+    footer_path: impl AsRef<str>,
+    content_path: &Path,
+    base_url: Option<&str>,
+) -> Option<HTMLContent> {
     let footer_path = get_absolute_path(footer_path).ok()?;
-    load_html_from_md_file(&footer_path, content_path).ok()
+    load_html_from_md_file(&footer_path, content_path, base_url).ok()
 }
 
 /// Converts a given markdown file's contents to HTML, incorporating the site's layout.
@@ -222,16 +244,21 @@ fn load_footer(footer_path: impl AsRef<str>, content_path: &Path) -> Option<HTML
 /// # Arguments
 /// * `path` - Path to the markdown file.
 /// * `content_path` - Path to the content directory for resolving relative paths.
+/// * base_url - Base url that the site will be served from.
 ///
 /// # Returns
 /// * A `Result<HTMLContent>` containing the HTML content or an error if conversion fails.
-fn load_html_from_md_file(path: &Path, content_path: &Path) -> Result<HTMLContent> {
+fn load_html_from_md_file(
+    path: &Path,
+    content_path: &Path,
+    base_url: Option<&str>,
+) -> Result<HTMLContent> {
     fs::read_to_string(&path)
         .with_context(|| format!("Failed to read from markdown file: {:?}", path))
         .and_then(|file_content| process_markdown(&file_content))
         .with_context(|| "Failed to process markdown file.")
         .and_then(|markdown_content| {
-            let html = markdown_to_html(&markdown_content.markdown, content_path)
+            let html = markdown_to_html(&markdown_content.markdown, content_path, base_url)
                 .with_context(|| "Failed to convert markdown to HTML.")?;
             Ok(HTMLContent {
                 front_matter: markdown_content.front_matter,
@@ -367,21 +394,25 @@ fn process_markdown(content: &str) -> Result<MarkdownContent> {
 /// # Arguments
 /// * markdown_input - The markdown text to convert.
 /// * content_dir - The content directory used for path resolution in the markdown.
+/// * base_url - Base url that the site will be served from.
 ///
 /// # Returns
 /// * A Result<String> containing the converted HTML text or an error if the conversion fails.
-fn markdown_to_html(markdown_input: &str, content_dir: &Path) -> Result<String> {
+fn markdown_to_html(
+    markdown_input: &str,
+    content_dir: &Path,
+    base_url: Option<&str>,
+) -> Result<String> {
     let parser = pulldown_cmark::Parser::new_ext(markdown_input, Options::all());
     let mut events: Vec<Event> = Vec::new();
 
-    let content_dir_match = format!(
-        "/{}",
-        content_dir
-            .file_name()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or("")
-    );
+    let content_dir_name = content_dir
+        .file_name()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or("");
+
+    let content_dir_with_slash = format!("/{}", content_dir_name);
 
     for event in parser {
         match event {
@@ -391,22 +422,33 @@ fn markdown_to_html(markdown_input: &str, content_dir: &Path) -> Result<String> 
                 title,
                 id,
             }) => {
-                let dest_url = if dest_url.starts_with(&content_dir_match) {
-                    dest_url.replace(&content_dir_match, "")
-                } else {
-                    dest_url.to_string()
-                };
-                let new_dest = if dest_url.ends_with(".md") {
-                    if dest_url.ends_with("./index.md") {
-                        "/".to_string()
-                    } else if dest_url.ends_with("index.md") {
-                        dest_url.replace("index.md", "")
+                let mut new_dest = dest_url.to_string();
+
+                if dest_url.starts_with(&content_dir_with_slash)
+                    || dest_url.starts_with(content_dir_name)
+                {
+                    let stripped_url = dest_url
+                        .strip_prefix(&content_dir_with_slash)
+                        .or_else(|| dest_url.strip_prefix(content_dir_name))
+                        .unwrap_or(&dest_url);
+
+                    new_dest = if let Some(base) = base_url {
+                        format!(
+                            "/{}/{}",
+                            base.trim_start_matches("/").trim_end_matches("/"),
+                            stripped_url.trim_start_matches("/")
+                        )
+                        .to_string()
                     } else {
-                        dest_url.replace(".md", ".html")
+                        stripped_url.to_string()
                     }
-                } else {
-                    dest_url.to_string()
-                };
+                }
+
+                if new_dest.ends_with(".md") {
+                    new_dest = new_dest
+                        .trim_end_matches("index.md")
+                        .replace(".md", ".html");
+                }
 
                 // Push the modified or original link event
                 events.push(Event::Start(Tag::Link {
