@@ -156,10 +156,6 @@ is perfect for that.
 simple-http-server -i --nocache ./_site
 ```
 
-### Want more?
-
-See [my personal website](https://github.com/gdtroszak/website) for an example.
-
 ## GitHub Action
 
 If you'd like to automate the generation and deployment of your site using GitHub Actions, you can use
