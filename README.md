@@ -20,6 +20,11 @@ Based on the premise that curation is valuable, so you'll need to manually
 organize and link your pages. It's really not that hard with a decent text
 editor.
 
+## Get started
+
+The easiest way is to just fork the
+[cliche-template](https://github.com/gdtroszak/cliche-template) repo, write some content, and then commit it.
+
 ## Install
 
 [Install Rust](https://www.rust-lang.org/tools/install) then run:
